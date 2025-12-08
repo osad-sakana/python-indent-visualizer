@@ -1,0 +1,35 @@
+{
+  "name": "python-indent-visualizer",
+  "displayName": "Python Indent Visualizer",
+  "description": "Visualize Python indentation structure as nested boxes",
+  "version": "0.1.0",
+  "publisher": "osad-sakana",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Visualization",
+    "Programming Languages"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "python-indent-visualizer.open",
+        "title": "Open Python Indent Visualizer"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^18.0.0",
+    "typescript": "^5.2.0"
+  }
+}

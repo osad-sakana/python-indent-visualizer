@@ -1,0 +1,33 @@
+# Compiled output
+out/
+*.js
+*.js.map
+
+# Node modules
+node_modules/
+
+# VS Code settings (keep launch.json and tasks.json in repo)
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+
+# Package manager locks (optional - uncomment if needed)
+# package-lock.json
+
+# Claude Code local settings
+.claude/settings.local.json
