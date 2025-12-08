@@ -1,23 +1,53 @@
 {
   "name": "python-indent-visualizer",
   "displayName": "Python Indent Visualizer",
-  "description": "Visualize Python indentation structure as nested boxes",
+  "description": "Pythonのインデント構造をネストされたブロックとして視覚的に表示します",
   "version": "0.1.0",
   "publisher": "osad-sakana",
+  "author": {
+    "name": "osad-sakana"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/osad-sakana/python-indent-visualizer#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/osad-sakana/python-indent-visualizer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/osad-sakana/python-indent-visualizer/issues"
+  },
+  "keywords": [
+    "python",
+    "indent",
+    "indentation",
+    "visualization",
+    "scope",
+    "structure",
+    "教育",
+    "初心者",
+    "scratch"
+  ],
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
     "Visualization",
-    "Programming Languages"
+    "Programming Languages",
+    "Education"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "contributes": {
     "commands": [
       {
         "command": "python-indent-visualizer.open",
-        "title": "Open Python Indent Visualizer"
+        "title": "Open Python Indent Visualizer",
+        "category": "Python"
       }
     ]
   },
@@ -25,11 +55,14 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile"
+    "pretest": "npm run compile",
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/vscode": "^1.80.0",
     "@types/node": "^18.0.0",
-    "typescript": "^5.2.0"
+    "typescript": "^5.2.0",
+    "@vscode/vsce": "^2.22.0"
   }
 }

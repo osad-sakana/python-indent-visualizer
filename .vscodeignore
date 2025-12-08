@@ -1,0 +1,28 @@
+# VS Code拡張機能パッケージから除外するファイル
+
+# ソースファイル
+src/**
+tsconfig.json
+
+# テストファイル
+test_*.py
+
+# 開発関連
+.vscode/**
+.vscode-test/**
+.gitignore
+.git/**
+
+# Node関連
+node_modules/**
+npm-debug.log
+
+# ビルド関連
+*.map
+
+# Claude Code
+.claude/**
+
+# その他
+.DS_Store
+*.vsix
