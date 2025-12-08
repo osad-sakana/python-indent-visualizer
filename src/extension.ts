@@ -51,11 +51,7 @@ export function activate(context: vscode.ExtensionContext) {
         // Handle messages from the webview
         currentPanel.webview.onDidReceiveMessage(
           message => {
-            switch (message.type) {
-              case 'revealLine':
-                revealLine(message.line);
-                break;
-            }
+            // Currently no messages to handle
           },
           null,
           context.subscriptions
@@ -83,6 +79,15 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeTextDocument(event => {
       if (currentPanel && vscode.window.activeTextEditor?.document === event.document) {
         debouncedUpdate();
+      }
+    })
+  );
+
+  // Listen for editor scroll changes
+  context.subscriptions.push(
+    vscode.window.onDidChangeTextEditorVisibleRanges(event => {
+      if (currentPanel && event.textEditor === vscode.window.activeTextEditor) {
+        sendVisibleRange(event.textEditor);
       }
     })
   );
@@ -173,6 +178,37 @@ function updateVisualization() {
     type: 'updateTree',
     tree: tree
   });
+
+  // Send current scroll position
+  if (editor) {
+    sendVisibleRange(editor);
+  }
+}
+
+/**
+ * Sends the visible range to the webview for scroll synchronization
+ * @param editor - The text editor
+ */
+function sendVisibleRange(editor: vscode.TextEditor) {
+  if (!currentPanel) {
+    return;
+  }
+
+  if (editor.document.languageId !== 'python' && !lastPythonDocument) {
+    return;
+  }
+
+  const visibleRanges = editor.visibleRanges;
+  if (visibleRanges.length > 0) {
+    const firstVisibleLine = visibleRanges[0].start.line;
+    const lastVisibleLine = visibleRanges[0].end.line;
+
+    currentPanel.webview.postMessage({
+      type: 'scrollSync',
+      firstVisibleLine: firstVisibleLine,
+      lastVisibleLine: lastVisibleLine
+    });
+  }
 }
 
 /**

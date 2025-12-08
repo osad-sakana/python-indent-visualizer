@@ -42,12 +42,6 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
       border-radius: 4px;
       padding: 8px;
       margin: 4px 0;
-      cursor: pointer;
-      transition: background-color 0.15s ease;
-    }
-
-    .block:hover {
-      background-color: var(--vscode-list-hoverBackground);
     }
 
     .block-header {
@@ -367,27 +361,32 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
 
         const html = tree.map(node => renderNode(node)).join('');
         root.innerHTML = html;
+      }
 
-        // Add click handlers to all blocks
-        document.querySelectorAll('.block').forEach(block => {
-          block.addEventListener('click', (e) => {
-            // Only trigger if clicking the block itself, not a child block
-            const clickedElement = e.target;
-            const isDirectClick = clickedElement === block ||
-                clickedElement.classList.contains('line-text') ||
-                clickedElement.classList.contains('block-header') ||
-                clickedElement.classList.contains('statement-icon');
+      /**
+       * Scrolls visualizer to match source code visible range
+       */
+      function scrollToVisibleRange(firstLine, lastLine) {
+        const allBlocks = document.querySelectorAll('.block');
 
-            if (isDirectClick) {
-              const line = parseInt(block.getAttribute('data-line'), 10);
-              vscode.postMessage({
-                type: 'revealLine',
-                line: line
-              });
-              e.stopPropagation();
+        // Find first block in visible range
+        let firstVisibleBlock = null;
+        allBlocks.forEach(block => {
+          const line = parseInt(block.getAttribute('data-line'), 10);
+          if (line >= firstLine && line <= lastLine) {
+            if (!firstVisibleBlock) {
+              firstVisibleBlock = block;
             }
-          });
+          }
         });
+
+        // Scroll to first visible block
+        if (firstVisibleBlock) {
+          firstVisibleBlock.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
       }
 
       /**
@@ -403,6 +402,9 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
           case 'emptyState':
             document.getElementById('root').innerHTML =
               \`<div class="empty-state">\${escapeHtml(message.message)}</div>\`;
+            break;
+          case 'scrollSync':
+            scrollToVisibleRange(message.firstVisibleLine, message.lastVisibleLine);
             break;
         }
       });
