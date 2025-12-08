@@ -52,7 +52,7 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
 
     .block-header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 8px;
       margin-bottom: 4px;
     }

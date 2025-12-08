@@ -149,6 +149,44 @@ export function buildIndentTree(text: string): IndentNode[] {
   // Track unclosed brackets
   let unclosedBrackets = 0;
 
+  // Track if we're in a multi-line structural statement (def/class with unclosed brackets)
+  let pendingStructuralNode: IndentNode | null = null;
+  let pendingStructuralLines: Array<{text: string, indent: number}> = [];
+  let pendingStructuralBrackets = 0;
+
+  const flushPendingStructural = () => {
+    if (pendingStructuralNode) {
+      // Combine all lines for the structural statement
+      const baseIndent = pendingStructuralNode.indent;
+      const formattedLines = pendingStructuralLines.map(item => {
+        const relativeIndent = Math.max(0, item.indent - baseIndent);
+        const spaces = '  '.repeat(relativeIndent / 4);
+        return spaces + item.text;
+      });
+
+      pendingStructuralNode.label = formattedLines.join('\n');
+      pendingStructuralNode.lines = formattedLines;
+
+      // Pop stack to correct level
+      while (stack.length > 0 && stack[stack.length - 1].indent >= pendingStructuralNode.indent) {
+        stack.pop();
+      }
+
+      // Add to parent
+      if (stack.length > 0) {
+        stack[stack.length - 1].children.push(pendingStructuralNode);
+      }
+
+      // Push onto stack
+      stack.push(pendingStructuralNode);
+
+      // Clear pending
+      pendingStructuralNode = null;
+      pendingStructuralLines = [];
+      pendingStructuralBrackets = 0;
+    }
+  };
+
   const flushOtherLines = () => {
     if (otherLinesBuffer.length > 0) {
       // Pop stack to the correct parent level before adding
@@ -229,6 +267,18 @@ export function buildIndentTree(text: string): IndentNode[] {
     // Update bracket count
     const bracketChange = countUnclosedBrackets(trimmedLine);
 
+    // Check if we're continuing a pending structural statement
+    if (pendingStructuralNode) {
+      pendingStructuralLines.push({text: trimmedLine, indent: indent});
+      pendingStructuralBrackets += bracketChange;
+
+      // If brackets are closed, flush the pending structural node
+      if (pendingStructuralBrackets <= 0) {
+        flushPendingStructural();
+      }
+      continue;
+    }
+
     if (isStructuralStatement(statementType)) {
       // Flush any accumulated 'other' statements first
       flushOtherLines();
@@ -242,18 +292,27 @@ export function buildIndentTree(text: string): IndentNode[] {
         statementType: statementType
       };
 
-      // Pop stack until we find the parent (node with lower indent)
-      while (stack.length > 0 && stack[stack.length - 1].indent >= indent) {
-        stack.pop();
-      }
+      // Check if this statement has unclosed brackets
+      if (bracketChange > 0) {
+        // Start pending structural node
+        pendingStructuralNode = node;
+        pendingStructuralLines = [{text: trimmedLine, indent: indent}];
+        pendingStructuralBrackets = bracketChange;
+      } else {
+        // Complete statement on single line
+        // Pop stack until we find the parent (node with lower indent)
+        while (stack.length > 0 && stack[stack.length - 1].indent >= indent) {
+          stack.pop();
+        }
 
-      // Add this node to the parent's children
-      if (stack.length > 0) {
-        stack[stack.length - 1].children.push(node);
-      }
+        // Add this node to the parent's children
+        if (stack.length > 0) {
+          stack[stack.length - 1].children.push(node);
+        }
 
-      // Push this node onto the stack
-      stack.push(node);
+        // Push this node onto the stack
+        stack.push(node);
+      }
     } else {
       // Non-structural statement - accumulate it
       if (otherLinesBuffer.length === 0) {
@@ -284,6 +343,9 @@ export function buildIndentTree(text: string): IndentNode[] {
 
   // Flush any remaining 'other' statements
   flushOtherLines();
+
+  // Flush any pending structural statement
+  flushPendingStructural();
 
   return root.children;
 }
