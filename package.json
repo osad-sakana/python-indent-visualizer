@@ -35,7 +35,10 @@
     "Programming Languages",
     "Education"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:python-indent-visualizer.open",
+    "onLanguage:python"
+  ],
   "main": "./out/extension.js",
   "icon": "icon.png",
   "galleryBanner": {

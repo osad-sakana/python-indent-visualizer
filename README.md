@@ -53,6 +53,7 @@ Scratchなどのビジュアル言語を最初に学んだ人がPythonを学ぶ�
 1. **拡張機能を起動**
    - コマンドパレット（`Cmd+Shift+P` / `Ctrl+Shift+P`）を開く
    - `Open Python Indent Visualizer` と入力して実行
+   - コマンドID: `python-indent-visualizer.open`
 
 2. **Pythonファイルを開く**
    - 任意のPythonファイル（`.py`）を開くと、自動的に可視化が表示されます
@@ -62,6 +63,19 @@ Scratchなどのビジュアル言語を最初に学んだ人がPythonを学ぶ�
 
 4. **スクロール**
    - エディタをスクロールすると、ビジュアライザーも連動してスクロールします
+
+## 使用例 / 表示イメージ
+
+```python
+def greet(name):
+    if name:
+        print(f"Hello, {name}")
+    else:
+        print("Hello")
+```
+
+上記コードを開くと、右ペインに各ステートメントが色付きブロックでネスト表示されます（if/elseが青系、defが緑系）。  
+![Python Indent Visualizer sample](./docs/screenshot-sample.png)
 
 ## インストール
 
@@ -111,6 +125,16 @@ python-visualizer/
 - **ウォッチモード**: `npm run watch`
 - **公開前ビルド**: `npm run vscode:prepublish`
 
+## 設定
+
+現時点でユーザー設定はありません。将来的にオプションが追加された場合はここに記載します。
+
+## コマンド一覧
+
+| コマンドID | タイトル | 説明 |
+| --- | --- | --- |
+| `python-indent-visualizer.open` | Open Python Indent Visualizer | ビジュアライザーを開きます |
+
 ## 技術仕様
 
 ### インデント検出
@@ -134,6 +158,10 @@ python-visualizer/
 ## ライセンス
 
 [MIT](LICENSE)
+
+## アイコン
+
+アイコンはDALL-Eで作成しました。
 
 ## 対象ユーザー
 
