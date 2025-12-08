@@ -133,7 +133,7 @@ python-visualizer/
 
 ## ライセンス
 
-MIT
+[MIT](LICENSE)
 
 ## 対象ユーザー
 
@@ -141,10 +141,6 @@ MIT
 - ビジュアルプログラミング（Scratchなど）から移行する学習者
 - インデントベースの構文に不慣れな開発者
 - Pythonコードの構造を視覚的に把握したい方
-
-## 公開方法
-
-VS Code Marketplaceへの公開手順は[PUBLISHING.md](PUBLISHING.md)を参照してください。
 
 ## フィードバック
 
