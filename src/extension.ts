@@ -4,6 +4,7 @@ import { getWebviewContent } from './webviewContent';
 
 let currentPanel: vscode.WebviewPanel | undefined = undefined;
 let updateTimeout: NodeJS.Timeout | undefined = undefined;
+let lastPythonDocument: vscode.TextDocument | undefined = undefined;
 
 /**
  * Activates the extension
@@ -122,21 +123,46 @@ function updateVisualization() {
 
   // Check if there's an active editor
   if (!editor) {
+    // If no editor but we have a last Python document, show that
+    if (lastPythonDocument) {
+      const text = lastPythonDocument.getText();
+      const tree = buildIndentTree(text);
+      currentPanel.webview.postMessage({
+        type: 'updateTree',
+        tree: tree
+      });
+      return;
+    }
+
     currentPanel.webview.postMessage({
       type: 'emptyState',
-      message: 'Open a Python file to visualize'
+      message: 'Pythonファイルを開いてください'
     });
     return;
   }
 
   // Check if the active document is Python
   if (editor.document.languageId !== 'python') {
+    // Not Python, keep showing last Python document if available
+    if (lastPythonDocument) {
+      const text = lastPythonDocument.getText();
+      const tree = buildIndentTree(text);
+      currentPanel.webview.postMessage({
+        type: 'updateTree',
+        tree: tree
+      });
+      return;
+    }
+
     currentPanel.webview.postMessage({
       type: 'emptyState',
-      message: 'Open a Python file to visualize'
+      message: 'Pythonファイルを開いてください'
     });
     return;
   }
+
+  // Save this as the last Python document
+  lastPythonDocument = editor.document;
 
   // Get the document text and build the tree
   const text = editor.document.getText();

@@ -230,7 +230,7 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
 </head>
 <body>
   <div id="root">
-    <div class="empty-state">Open a Python file to visualize its indent structure</div>
+    <div class="empty-state">Pythonファイルを開いてインデント構造を可視化します</div>
   </div>
 
   <script>
@@ -361,7 +361,7 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
         const root = document.getElementById('root');
 
         if (!tree || tree.length === 0) {
-          root.innerHTML = '<div class="empty-state">No Python code to visualize</div>';
+          root.innerHTML = '<div class="empty-state">表示するPythonコードがありません</div>';
           return;
         }
 
