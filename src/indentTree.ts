@@ -227,8 +227,8 @@ export function buildIndentTree(text: string): IndentNode[] {
         const fullText = formattedLines.join('\n');
         const firstLine = formattedLines[0];
 
-        // Check if this is an assignment statement (only for single-line statements)
-        const assignment = formattedLines.length === 1 ? detectAssignment(firstLine) : null;
+        // Check if this is an assignment statement (both single and multi-line)
+        const assignment = detectAssignment(firstLine);
         const statementType: StatementType = assignment ? 'assignment' : 'other';
 
         const node: IndentNode = {

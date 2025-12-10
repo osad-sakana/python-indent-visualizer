@@ -53,6 +53,10 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
       margin-bottom: 4px;
     }
 
+    .block-header.multiline {
+      align-items: flex-start;
+    }
+
     .statement-icon {
       display: inline-flex;
       align-items: center;
@@ -258,6 +262,18 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
     .assignment-expr {
       color: var(--vscode-foreground);
     }
+
+    /* Loop variable styling */
+    .loop-var {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      background-color: #FF8C1A;
+      color: white;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
@@ -308,7 +324,7 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
        */
       function highlightAssignment(text) {
         // Handle multi-line text
-        const lines = text.split('\\n');
+        const lines = text.split('\\\\n');
         const firstLine = lines[0];
 
         // Match assignment pattern: variable_name = expression
@@ -327,7 +343,7 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
           // Add remaining lines (for multi-line statements)
           if (lines.length > 1) {
             for (let i = 1; i < lines.length; i++) {
-              result += '\\n' + escapeHtml(lines[i]);
+              result += '\\\\n' + escapeHtml(lines[i]);
             }
           }
 
@@ -364,15 +380,31 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
           return escapeHtml(text);
         }
 
+        // Special handling for 'for' loops
+        if (statementType === 'for') {
+          // Pattern: for variable in iterable:
+          const forPattern = /^(\\s*)(for)\\s+([a-zA-Z_][a-zA-Z0-9_,\\s]*)\\s+(in)\\s+(.*)$/;
+          const match = text.match(forPattern);
+
+          if (match) {
+            const [, leadingSpace, forKeyword, loopVar, inKeyword, iterable] = match;
+            return escapeHtml(leadingSpace) +
+                   '<span class="keyword keyword-for">' + escapeHtml(forKeyword) + '</span> ' +
+                   '<span class="loop-var">' + escapeHtml(loopVar.trim()) + '</span> ' +
+                   '<span class="keyword keyword-for">' + escapeHtml(inKeyword) + '</span> ' +
+                   escapeHtml(iterable);
+          }
+        }
+
         // Find the keyword at the start of the statement (after whitespace)
-        const pattern = new RegExp(\`^(\\\\s*)(\\\\b\${keyword}\\\\b)(.*)\$\`);
+        const pattern = new RegExp('^(\\\\s*)(\\\\b' + keyword + '\\\\b)(.*)$');
         const match = text.match(pattern);
 
         if (match) {
           const [, leadingSpace, keywordText, rest] = match;
-          const keywordClass = statementType === 'method' ? 'keyword-method' : \`keyword-\${statementType}\`;
+          const keywordClass = statementType === 'method' ? 'keyword-method' : 'keyword-' + statementType;
           return escapeHtml(leadingSpace) +
-                 \`<span class="keyword \${keywordClass}">\${escapeHtml(keywordText)}</span>\` +
+                 '<span class="keyword ' + keywordClass + '">' + escapeHtml(keywordText) + '</span>' +
                  escapeHtml(rest);
         }
 
@@ -390,55 +422,54 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
 
         const icon = getStatementIcon(node.statementType);
 
+        // Check if the label has multiple lines
+        const isMultiline = node.label.includes('\\n');
+
         // For assignment nodes
         if (node.statementType === 'assignment') {
           const highlightedLabel = highlightAssignment(node.label);
+          const headerClass = isMultiline ? 'block-header multiline' : 'block-header';
 
-          return \`
-            <div class="block"
-                 data-line="\${node.line}"
-                 data-indent="\${node.indent}"
-                 data-statement="\${node.statementType}"
-                 style="margin-left: \${marginLeft}px;">
-              <div class="block-header">
-                <span class="statement-icon \${node.statementType}">\${icon}</span>
-                <div class="line-text">\${highlightedLabel}</div>
-              </div>
-              \${childrenHtml}
-            </div>
-          \`;
+          return '<div class="block"' +
+                 ' data-line="' + node.line + '"' +
+                 ' data-indent="' + node.indent + '"' +
+                 ' data-statement="' + node.statementType + '"' +
+                 ' style="margin-left: ' + marginLeft + 'px;">' +
+                 '<div class="' + headerClass + '">' +
+                 '<span class="statement-icon ' + node.statementType + '">' + icon + '</span>' +
+                 '<div class="line-text">' + highlightedLabel + '</div>' +
+                 '</div>' +
+                 childrenHtml +
+                 '</div>';
         }
 
         // For 'other' type nodes
         if (node.statementType === 'other') {
-          return \`
-            <div class="block block-other"
-                 data-line="\${node.line}"
-                 data-indent="\${node.indent}"
-                 data-statement="\${node.statementType}"
-                 style="margin-left: \${marginLeft}px;">
-              <div class="line-text">\${escapeHtml(node.label)}</div>
-              \${childrenHtml}
-            </div>
-          \`;
+          return '<div class="block block-other"' +
+                 ' data-line="' + node.line + '"' +
+                 ' data-indent="' + node.indent + '"' +
+                 ' data-statement="' + node.statementType + '"' +
+                 ' style="margin-left: ' + marginLeft + 'px;">' +
+                 '<div class="line-text">' + escapeHtml(node.label) + '</div>' +
+                 childrenHtml +
+                 '</div>';
         }
 
         // Highlight the keyword in the label
         const highlightedLabel = highlightKeyword(node.label, node.statementType);
+        const headerClass = isMultiline ? 'block-header multiline' : 'block-header';
 
-        return \`
-          <div class="block"
-               data-line="\${node.line}"
-               data-indent="\${node.indent}"
-               data-statement="\${node.statementType}"
-               style="margin-left: \${marginLeft}px;">
-            <div class="block-header">
-              <span class="statement-icon \${node.statementType}">\${icon}</span>
-              <div class="line-text">\${highlightedLabel}</div>
-            </div>
-            \${childrenHtml}
-          </div>
-        \`;
+        return '<div class="block"' +
+               ' data-line="' + node.line + '"' +
+               ' data-indent="' + node.indent + '"' +
+               ' data-statement="' + node.statementType + '"' +
+               ' style="margin-left: ' + marginLeft + 'px;">' +
+               '<div class="' + headerClass + '">' +
+               '<span class="statement-icon ' + node.statementType + '">' + icon + '</span>' +
+               '<div class="line-text">' + highlightedLabel + '</div>' +
+               '</div>' +
+               childrenHtml +
+               '</div>';
       }
 
       /**
@@ -494,7 +525,7 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
             break;
           case 'emptyState':
             document.getElementById('root').innerHTML =
-              \`<div class="empty-state">\${escapeHtml(message.message)}</div>\`;
+              '<div class="empty-state">' + escapeHtml(message.message) + '</div>';
             break;
           case 'scrollSync':
             scrollToVisibleRange(message.firstVisibleLine, message.lastVisibleLine);
