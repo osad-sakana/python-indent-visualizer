@@ -38,15 +38,17 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
     }
 
     .block {
-      border: 1px solid var(--vscode-panel-border);
-      border-radius: 4px;
-      padding: 8px;
-      margin: 4px 0;
+      border: 2px solid;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin: 6px 0;
+      position: relative;
+      background-color: var(--vscode-editor-background);
     }
 
     .block-header {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 8px;
       margin-bottom: 4px;
     }
@@ -55,13 +57,15 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 48px;
-      height: 20px;
-      padding: 0 6px;
-      border-radius: 3px;
-      font-size: 11px;
-      font-weight: bold;
+      min-width: 24px;
+      height: 28px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
       flex-shrink: 0;
+      gap: 5px;
+      white-space: nowrap;
     }
 
     .line-text {
@@ -73,55 +77,55 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
       flex: 1;
     }
 
-    /* Statement type colors and icons */
+    /* Statement type colors and icons - Scratch-inspired */
     .statement-icon.if,
     .statement-icon.elif,
     .statement-icon.else {
-      background-color: rgba(100, 180, 255, 0.8);
+      background-color: #FFB84D;
       color: white;
     }
 
     .statement-icon.for,
     .statement-icon.while {
-      background-color: rgba(150, 100, 255, 0.8);
+      background-color: #FFAB19;
       color: white;
     }
 
     .statement-icon.def {
-      background-color: rgba(100, 200, 150, 0.8);
+      background-color: #5CB1D6;
       color: white;
     }
 
     .statement-icon.method {
-      background-color: rgba(80, 180, 180, 0.8);
+      background-color: #4CBFE6;
       color: white;
     }
 
     .statement-icon.class {
-      background-color: rgba(255, 150, 50, 0.8);
+      background-color: #CF63CF;
       color: white;
     }
 
     .statement-icon.try,
     .statement-icon.except,
     .statement-icon.finally {
-      background-color: rgba(255, 100, 100, 0.8);
+      background-color: #FF6680;
       color: white;
     }
 
     .statement-icon.with {
-      background-color: rgba(200, 200, 100, 0.8);
+      background-color: #59C059;
       color: white;
     }
 
     .statement-icon.match,
     .statement-icon.case {
-      background-color: rgba(255, 100, 200, 0.8);
+      background-color: #D65CD6;
       color: white;
     }
 
     .statement-icon.other {
-      background-color: rgba(120, 120, 120, 0.5);
+      background-color: #9966FF;
       color: white;
     }
 
@@ -133,78 +137,86 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
     .keyword-if,
     .keyword-elif,
     .keyword-else {
-      color: rgba(100, 180, 255, 1);
+      color: #FFB84D;
     }
 
     .keyword-for,
     .keyword-while {
-      color: rgba(150, 100, 255, 1);
+      color: #FFAB19;
     }
 
     .keyword-def {
-      color: rgba(100, 200, 150, 1);
+      color: #5CB1D6;
     }
 
     .keyword-method {
-      color: rgba(80, 180, 180, 1);
+      color: #4CBFE6;
     }
 
     .keyword-class {
-      color: rgba(255, 150, 50, 1);
+      color: #CF63CF;
     }
 
     .keyword-try,
     .keyword-except,
     .keyword-finally {
-      color: rgba(255, 100, 100, 1);
+      color: #FF6680;
     }
 
     .keyword-with {
-      color: rgba(200, 200, 100, 1);
+      color: #59C059;
     }
 
     .keyword-match,
     .keyword-case {
-      color: rgba(255, 100, 200, 1);
+      color: #D65CD6;
     }
 
     /* Border colors for blocks by statement type */
     .block[data-statement="if"],
     .block[data-statement="elif"],
     .block[data-statement="else"] {
-      border-left: 3px solid rgba(100, 180, 255, 0.8);
+      border-color: #FFB84D;
+      background-color: rgba(255, 184, 77, 0.08);
     }
 
     .block[data-statement="for"],
     .block[data-statement="while"] {
-      border-left: 3px solid rgba(150, 100, 255, 0.8);
+      border-color: #FFAB19;
+      background-color: rgba(255, 171, 25, 0.08);
     }
 
     .block[data-statement="def"] {
-      border-left: 3px solid rgba(100, 200, 150, 0.8);
+      border-color: #5CB1D6;
+      background-color: rgba(92, 177, 214, 0.08);
     }
 
     .block[data-statement="method"] {
-      border-left: 3px solid rgba(80, 180, 180, 0.8);
+      border-color: #4CBFE6;
+      background-color: rgba(76, 191, 230, 0.08);
     }
 
     .block[data-statement="class"] {
-      border-left: 3px solid rgba(255, 150, 50, 0.8);
+      border-color: #CF63CF;
+      background-color: rgba(207, 99, 207, 0.08);
     }
 
     .block[data-statement="try"],
     .block[data-statement="except"],
     .block[data-statement="finally"] {
-      border-left: 3px solid rgba(255, 100, 100, 0.8);
+      border-color: #FF6680;
+      background-color: rgba(255, 102, 128, 0.08);
     }
 
     .block[data-statement="with"] {
-      border-left: 3px solid rgba(200, 200, 100, 0.8);
+      border-color: #59C059;
+      background-color: rgba(89, 192, 89, 0.08);
     }
 
     .block[data-statement="match"],
     .block[data-statement="case"] {
-      border-left: 3px solid rgba(255, 100, 200, 0.8);
+      border-color: #D65CD6;
+      background-color: rgba(214, 92, 214, 0.08);
     }
 
     .block {
@@ -213,8 +225,8 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
 
     /* Style for 'other' type blocks (grouped statements) */
     .block-other {
-      border-left: 2px solid rgba(120, 120, 120, 0.3);
-      background-color: rgba(120, 120, 120, 0.05);
+      border-color: #9966FF;
+      background-color: rgba(153, 102, 255, 0.08);
     }
 
     .block-other .line-text {
@@ -245,23 +257,23 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
        */
       function getStatementIcon(type) {
         const icons = {
-          'if': '条件',
-          'elif': '条件',
-          'else': '条件',
-          'for': 'ループ',
-          'while': 'ループ',
-          'def': '関数',
-          'method': 'メソッド',
-          'class': 'クラス',
-          'try': '例外',
-          'except': '例外',
-          'finally': '例外',
-          'with': 'with',
-          'match': 'マッチ',
-          'case': 'マッチ',
-          'other': '··'
+          'if': '🔀 条件',
+          'elif': '🔀 条件',
+          'else': '🔀 条件',
+          'for': '🔁 ループ',
+          'while': '🔄 ループ',
+          'def': '📦 関数',
+          'method': '⚙️ メソッド',
+          'class': '🏗️ クラス',
+          'try': '🛡️ 例外',
+          'except': '⚠️ 例外',
+          'finally': '✅ 例外',
+          'with': '📋 with',
+          'match': '🎯 マッチ',
+          'case': '🎯 マッチ',
+          'other': '📝'
         };
-        return icons[type] || '··';
+        return icons[type] || '📝';
       }
 
       /**

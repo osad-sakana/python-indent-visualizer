@@ -322,21 +322,36 @@ export function buildIndentTree(text: string): IndentNode[] {
         otherLinesBuffer.push(trimmedLine);
         otherLinesBufferRaw.push({text: trimmedLine, indent: indent});
         unclosedBrackets += bracketChange;
-      } else if (unclosedBrackets > 0 || indent === otherLinesIndent) {
-        // Inside brackets or same indent level - add to current group
+
+        // If brackets are closed, flush immediately (single statement)
+        if (unclosedBrackets <= 0) {
+          flushOtherLines();
+        }
+      } else if (unclosedBrackets > 0) {
+        // Inside brackets - add to current group (multi-line statement)
         otherLinesBuffer.push(trimmedLine);
         otherLinesBufferRaw.push({text: trimmedLine, indent: indent});
         unclosedBrackets += bracketChange;
+
+        // If brackets are now closed, flush the statement
+        if (unclosedBrackets <= 0) {
+          flushOtherLines();
+        }
       } else {
-        // Different indent level and not in brackets - flush previous and start new
+        // Brackets are closed and we have a new statement - flush previous and start new
         flushOtherLines();
 
-        // flushOtherLines already handles stack popping, so just start new group
+        // Start new statement
         otherLinesStart = i;
         otherLinesIndent = indent;
         otherLinesBuffer.push(trimmedLine);
         otherLinesBufferRaw.push({text: trimmedLine, indent: indent});
         unclosedBrackets += bracketChange;
+
+        // If brackets are closed, flush immediately (single statement)
+        if (unclosedBrackets <= 0) {
+          flushOtherLines();
+        }
       }
     }
   }
