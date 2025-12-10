@@ -175,6 +175,10 @@ export function buildIndentTree(text: string): IndentNode[] {
   let pendingStructuralLines: Array<{text: string, indent: number}> = [];
   let pendingStructuralBrackets = 0;
 
+  // Track if we're inside a docstring
+  let inDocstring = false;
+  let docstringDelimiter = '';
+
   const flushPendingStructural = () => {
     if (pendingStructuralNode) {
       // Combine all lines for the structural statement
@@ -271,6 +275,32 @@ export function buildIndentTree(text: string): IndentNode[] {
     // Skip comment lines (lines that start with #)
     const trimmedLine = line.trim();
     if (trimmedLine.startsWith('#')) {
+      continue;
+    }
+
+    // Handle docstrings (""" or ''')
+    if (!inDocstring) {
+      // Check if this line starts a docstring
+      if (trimmedLine.startsWith('"""') || trimmedLine.startsWith("'''")) {
+        const delimiter = trimmedLine.startsWith('"""') ? '"""' : "'''";
+        // Check if it's a single-line docstring
+        const afterDelimiter = trimmedLine.substring(3);
+        if (afterDelimiter.includes(delimiter)) {
+          // Single-line docstring - skip it
+          continue;
+        } else {
+          // Multi-line docstring - start tracking
+          inDocstring = true;
+          docstringDelimiter = delimiter;
+          continue;
+        }
+      }
+    } else {
+      // We're inside a docstring - check if this line ends it
+      if (trimmedLine.includes(docstringDelimiter)) {
+        inDocstring = false;
+        docstringDelimiter = '';
+      }
       continue;
     }
 
