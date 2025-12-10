@@ -58,8 +58,8 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
       align-items: center;
       justify-content: center;
       min-width: 24px;
-      height: 28px;
-      padding: 6px 10px;
+      height: 24px;
+      padding: 3px 10px;
       border-radius: 6px;
       font-size: 13px;
       font-weight: 600;
@@ -126,6 +126,11 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
 
     .statement-icon.other {
       background-color: #9966FF;
+      color: white;
+    }
+
+    .statement-icon.assignment {
+      background-color: #FF8C1A;
       color: white;
     }
 
@@ -219,6 +224,11 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
       background-color: rgba(214, 92, 214, 0.08);
     }
 
+    .block[data-statement="assignment"] {
+      border-color: #FF8C1A;
+      background-color: rgba(255, 140, 26, 0.08);
+    }
+
     .block {
       position: relative;
     }
@@ -231,6 +241,22 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
 
     .block-other .line-text {
       white-space: pre-wrap;
+    }
+
+    /* Assignment statement styling */
+    .assignment-var {
+      color: #FF8C1A;
+      font-weight: 700;
+    }
+
+    .assignment-arrow {
+      color: #9966FF;
+      font-weight: 700;
+      font-size: 1.1em;
+    }
+
+    .assignment-expr {
+      color: var(--vscode-foreground);
     }
   </style>
 </head>
@@ -271,9 +297,45 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
           'with': '📋 with',
           'match': '🎯 マッチ',
           'case': '🎯 マッチ',
+          'assignment': '📥 代入',
           'other': '📝'
         };
         return icons[type] || '📝';
+      }
+
+      /**
+       * Highlights assignment statements with variable name and expression
+       */
+      function highlightAssignment(text) {
+        // Handle multi-line text
+        const lines = text.split('\\n');
+        const firstLine = lines[0];
+
+        // Match assignment pattern: variable_name = expression
+        // Support multiple assignment targets: a, b = ...
+        // Exclude comparison operators (==, !=, <=, >=)
+        const assignmentPattern = /^([a-zA-Z_][a-zA-Z0-9_,\\s\\[\\]\\.]*)\\s*=\\s*(?!=)(.*)$/;
+        const match = firstLine.match(assignmentPattern);
+
+        if (match) {
+          const [, leftSide, rightSide] = match;
+          const variables = leftSide.trim();
+
+          // Highlight first line with variable and expression
+          let result = '<span class="assignment-var">' + escapeHtml(variables) + '</span> <span class="assignment-arrow">=</span> <span class="assignment-expr">' + escapeHtml(rightSide);
+
+          // Add remaining lines (for multi-line statements)
+          if (lines.length > 1) {
+            for (let i = 1; i < lines.length; i++) {
+              result += '\\n' + escapeHtml(lines[i]);
+            }
+          }
+
+          result += '</span>';
+          return result;
+        }
+
+        return escapeHtml(text);
       }
 
       /**
@@ -328,7 +390,26 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
 
         const icon = getStatementIcon(node.statementType);
 
-        // For 'other' type nodes, show without icon
+        // For assignment nodes
+        if (node.statementType === 'assignment') {
+          const highlightedLabel = highlightAssignment(node.label);
+
+          return \`
+            <div class="block"
+                 data-line="\${node.line}"
+                 data-indent="\${node.indent}"
+                 data-statement="\${node.statementType}"
+                 style="margin-left: \${marginLeft}px;">
+              <div class="block-header">
+                <span class="statement-icon \${node.statementType}">\${icon}</span>
+                <div class="line-text">\${highlightedLabel}</div>
+              </div>
+              \${childrenHtml}
+            </div>
+          \`;
+        }
+
+        // For 'other' type nodes
         if (node.statementType === 'other') {
           return \`
             <div class="block block-other"

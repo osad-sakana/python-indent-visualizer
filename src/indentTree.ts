@@ -16,6 +16,7 @@ export type StatementType =
   | 'with'
   | 'match'
   | 'case'
+  | 'assignment'
   | 'other';
 
 /**
@@ -61,7 +62,27 @@ function detectStatementType(line: string): StatementType {
  * Checks if a statement type is structural (creates a new block)
  */
 function isStructuralStatement(type: StatementType): boolean {
-  return type !== 'other';
+  return type !== 'other' && type !== 'assignment';
+}
+
+/**
+ * Detects if a line is an assignment statement and returns the parts
+ * @param line - Trimmed line of Python code
+ * @returns Object with variable and expression, or null if not an assignment
+ */
+function detectAssignment(line: string): { variable: string; expression: string } | null {
+  // Match assignment pattern: variable_name = expression
+  // Exclude comparison operators (==, !=, <=, >=)
+  const assignmentPattern = /^([a-zA-Z_][a-zA-Z0-9_,\s\[\]\.]*)(\s*=\s*)(?!=)(.+)$/;
+  const match = line.match(assignmentPattern);
+
+  if (match) {
+    const variable = match[1].trim();
+    const expression = match[3].trim();
+    return { variable, expression };
+  }
+
+  return null;
 }
 
 /**
@@ -203,12 +224,19 @@ export function buildIndentTree(text: string): IndentNode[] {
           return spaces + item.text;
         });
 
+        const fullText = formattedLines.join('\n');
+        const firstLine = formattedLines[0];
+
+        // Check if this is an assignment statement (only for single-line statements)
+        const assignment = formattedLines.length === 1 ? detectAssignment(firstLine) : null;
+        const statementType: StatementType = assignment ? 'assignment' : 'other';
+
         const node: IndentNode = {
-          label: formattedLines.join('\n'),
+          label: fullText,
           line: otherLinesStart,
           indent: otherLinesIndent,
           children: [],
-          statementType: 'other',
+          statementType: statementType,
           lines: formattedLines
         };
         stack[stack.length - 1].children.push(node);
