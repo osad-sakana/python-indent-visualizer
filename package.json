@@ -2,7 +2,7 @@
   "name": "python-indent-visualizer",
   "displayName": "Python Indent Visualizer",
   "description": "Pythonのインデント構造をネストされたブロックとして視覚的に表示します",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "osad-sakana",
   "author": {
     "name": "osad-sakana"
