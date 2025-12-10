@@ -1,175 +1,206 @@
 # Python Indent Visualizer
 
-Pythonのインデント構造をネストされたブロックとして視覚的に表示するVS Code拡張機能です。
+**Pythonのインデント構造を視覚的に表示する、初学者に優しいVS Code拡張機能**
 
-![icon](./icon.png)
+Scratchなどのビジュアルプログラミング言語からPythonに移行する学習者を主な対象とした、コード構造可視化ツールです。
 
-## 概要
+![Python Indent Visualizer](./icon.png)
 
-Scratchなどのビジュアル言語を最初に学んだ人がPythonを学ぶにあたって、**最も障壁となるのがインデント**です。インデントがうまく理解できないため、スコープの範囲を誤るケースが多々見受けられます。
+## なぜこの拡張機能が必要か？
 
-この拡張機能は、Pythonのコード構造を視覚的に表示することで、初学者がインデントとスコープの概念を直感的に理解できるようサポートします。
+**インデントはPython初学者の最大の壁**
 
-## 主な機能
+ビジュアル言語（Scratchなど）を最初に学んだ人がPythonに移行する際、最も苦労するのがインデントです。視覚的なブロックから見えないスペースへの変化により、スコープの範囲を誤るケースが多発します。
 
-### 🎨 構造的な可視化
+この拡張機能は、Pythonコードの構造をScratchのようなビジュアルブロックとして表示し、初学者が直感的に理解できるようサポートします。
 
-- **カラーアイコン**: 各Pythonステートメント（if/for/while/def/classなど）を色分けされたアイコンで表示
-- **ネストブロック**: インデントレベルに応じてネストされたブロックで構造を表現
-- **キーワードハイライト**: Pythonキーワードがアイコンと同じ色でハイライト表示
+## ✨ 主な機能
 
-### 📍 ステートメントタイプ
+### 🎨 カラフルな構造表示
 
-| アイコン | タイプ | 色 |
-|---------|--------|-----|
-| 条件 | if/elif/else | 青色 |
-| ループ | for/while | 紫色 |
-| 関数 | def | 緑色 |
-| メソッド | クラス内のdef | 青緑色 |
-| クラス | class | オレンジ色 |
-| 例外 | try/except/finally | 赤色 |
-| with | with | 黄色 |
-| マッチ | match/case | ピンク色 |
+各Pythonステートメントを色分けされたアイコンとブロックで表示：
 
-### 🔄 インテリジェントなグループ化
+| ステートメント | アイコン | 色 | 用途 |
+|------------|---------|-----|------|
+| if/elif/else | 🔀 条件 | オレンジ | 条件分岐 |
+| for/while | 🔁 ループ | オレンジ | 繰り返し |
+| def | 📦 関数 | 青 | 関数定義 |
+| method | ⚙️ メソッド | 水色 | クラス内の関数 |
+| class | 🏗️ クラス | ピンク | クラス定義 |
+| try/except/finally | 🛡️ 例外 | 赤 | エラー処理 |
+| with | 📋 with | 緑 | コンテキスト管理 |
+| match/case | 🎯 マッチ | ピンク | パターンマッチング |
+| assignment | 📥 代入 | オレンジ | 変数への代入 |
+| import | 📦 import | 緑 | モジュールのインポート |
 
-- **通常の文のグループ化**: 同じスコープ内の連続する文を1つのブロックにまとめる
-- **空行による分離**: 空行で異なるブロックとして分離
-- **括弧内の改行対応**: リストや関数引数などの括弧内の改行を1つのブロックとして扱う
-- **複数行の関数定義**: 引数を複数行に分けた関数定義も正しく表示
+### 🔍 インテリジェントな表示
 
-### 🔗 スクロール同期
+#### デコレーター対応
+```python
+@app.route('/api')
+@login_required
+def api_endpoint():
+    pass
+```
+デコレーターと関数定義を1つのブロックとして表示（すべて青色でハイライト）
 
-- エディタのスクロールに合わせてビジュアライザーも自動スクロール
-- コードの該当部分を常に確認しながら学習可能
+#### Import文の特別表示
+```python
+import os                    # バッジ: os
+from math import sin, cos    # バッジ: sin, cos
+import numpy as np           # バッジ: np
+```
+インポートされるモジュールや項目を緑色のバッジで表示。`as`エイリアスがある場合はエイリアスを表示。
 
-### 💾 状態の保持
+#### キーワードの色分け
+- **return, yield** → 関数色（青）
+- **break, continue** → ループ色（オレンジ）
+- **pass, raise, assert** → その他（紫）
 
-- 非Pythonファイルに切り替えても、最後に表示したPythonファイルの可視化を保持
-- リファレンスとして常に表示しておくことが可能
+#### 代入文のハイライト
+```python
+result = calculate(x, y)
+```
+変数名と式を色分けして表示。
 
-## 使い方
+### 📐 スマートなグループ化
 
-1. **拡張機能を起動**
-   - コマンドパレット（`Cmd+Shift+P` / `Ctrl+Shift+P`）を開く
-   - `Open Python Indent Visualizer` と入力して実行
-   - コマンドID: `python-indent-visualizer.open`
+- **同じスコープの文をグループ化**: 連続する通常の文を1つのブロックにまとめる
+- **空行で分離**: 空行で異なるブロックとして分ける
+- **括弧内の改行を考慮**: リストや関数引数の改行を正しく処理
+- **複数行の関数定義**: 引数が複数行にまたがる場合も正しく表示
+- **コメントとdocstringを除外**: `#`コメントと`"""`docstringは表示しない
 
-2. **Pythonファイルを開く**
-   - 任意のPythonファイル（`.py`）を開くと、自動的に可視化が表示されます
+### 🔗 エディタとの連携
 
-3. **コードの編集**
-   - コードを編集すると、リアルタイムで可視化が更新されます
+- **スクロール同期**: エディタのスクロールに合わせてビジュアライザーも自動スクロール
+- **リアルタイム更新**: コードを編集すると即座に可視化を更新
+- **状態の保持**: 非Pythonファイルに切り替えても最後の表示を保持
 
-4. **スクロール**
-   - エディタをスクロールすると、ビジュアライザーも連動してスクロールします
+## 📦 インストール
 
-## 使用例 / 表示イメージ
+### VS Code Marketplace（推奨）
 
+1. VS Codeを開く
+2. 拡張機能タブ（`Ctrl+Shift+X` / `Cmd+Shift+X`）を開く
+3. "Python Indent Visualizer"を検索
+4. "インストール"をクリック
+
+または、[こちら](https://marketplace.visualstudio.com/items?itemName=osad-sakana.python-indent-visualizer)から直接インストール
+
+### コマンドラインから
+
+```bash
+code --install-extension osad-sakana.python-indent-visualizer
+```
+
+## 🚀 使い方
+
+### 1. ビジュアライザーを開く
+
+**方法A: コマンドパレットから**
+1. `Ctrl+Shift+P` (Windows/Linux) または `Cmd+Shift+P` (Mac)
+2. "Open Python Indent Visualizer"と入力して実行
+
+**方法B: アクティビティバーから**
+- Pythonファイルを開くと、自動的にビジュアライザーがアクティブになります
+
+### 2. Pythonコードを書く/開く
+
+任意のPythonファイル（`.py`）を開くと、右ペインに構造が可視化されます。
+
+### 3. リアルタイムで確認
+
+- コードを編集すると即座に可視化が更新されます
+- エディタをスクロールすると、ビジュアライザーも連動してスクロールします
+
+## 📸 スクリーンショット
+
+### 基本的な構造の表示
 ```python
 def greet(name):
     if name:
-        print(f"Hello, {name}")
+        print(f"Hello, {name}!")
     else:
-        print("Hello")
+        print("Hello!")
 ```
 
-上記コードを開くと、右ペインに各ステートメントが色付きブロックでネスト表示されます（if/elseが青系、defが緑系）。  
-![Python Indent Visualizer sample](./docs/screenshot-sample.png)
+![基本的な表示](./docs/screenshot-sample.png)
 
-## インストール
-
-### 開発版として実行
-
-1. このリポジトリをクローン
-```bash
-git clone <repository-url>
-cd python-visualizer
+### 複雑なネスト構造
+```python
+class Calculator:
+    def calculate(self, x, y):
+        try:
+            result = x / y
+            return result
+        except ZeroDivisionError:
+            print("エラー: ゼロ除算")
+            return None
 ```
 
-2. 依存関係をインストール
-```bash
-npm install
-```
+各ブロックが色分けされ、ネスト構造が一目で分かります。
 
-3. コンパイル
-```bash
-npm run compile
-```
+## ⚙️ コマンド
 
-4. VS Codeで開く
-```bash
-code .
-```
+| コマンド | コマンドID | 説明 |
+|---------|-----------|------|
+| Open Python Indent Visualizer | `python-indent-visualizer.open` | ビジュアライザーを開きます |
 
-5. `F5`キーを押してExtension Development Hostを起動
+## 🎯 対象ユーザー
 
-## 開発
+- **Python初学者**: インデントとスコープの概念を視覚的に理解したい方
+- **ビジュアル言語からの移行者**: Scratch、Blockly、MakeCodeなどから移行中の学習者
+- **教育者**: Pythonを教える先生や講師
+- **コードレビュアー**: コードの構造を素早く把握したい方
 
-### プロジェクト構成
+## 🔧 技術仕様
 
-```
-python-visualizer/
-├── src/
-│   ├── extension.ts       # 拡張機能のメインロジック
-│   ├── indentTree.ts      # インデントツリー構築ロジック
-│   └── webviewContent.ts  # ビジュアライザーのHTML/CSS/JS
-├── out/                   # コンパイル済みファイル
-├── package.json           # 拡張機能マニフェスト
-└── tsconfig.json          # TypeScript設定
-```
+### サポートするPython構文
 
-### ビルドコマンド
-
-- **コンパイル**: `npm run compile`
-- **ウォッチモード**: `npm run watch`
-- **公開前ビルド**: `npm run vscode:prepublish`
-
-## 設定
-
-現時点でユーザー設定はありません。将来的にオプションが追加された場合はここに記載します。
-
-## コマンド一覧
-
-| コマンドID | タイトル | 説明 |
-| --- | --- | --- |
-| `python-indent-visualizer.open` | Open Python Indent Visualizer | ビジュアライザーを開きます |
-
-## 技術仕様
+- 制御フロー: if/elif/else, for, while, match/case
+- 関数/クラス: def, class, デコレーター(@)
+- 例外処理: try/except/finally
+- コンテキスト管理: with
+- モジュール: import, from...import
+- 特殊文: return, yield, break, continue, pass, raise, assert
 
 ### インデント検出
 
-- タブは4スペースに変換
-- インデントレベルからネスト構造を自動構築
-- 括弧の開閉を追跡して複数行ステートメントを正しく処理
+- タブを4スペースに自動変換
+- インデントレベルからネスト構造を構築
+- 括弧（`[]`, `()`, `{}`）の開閉を追跡して複数行ステートメントを処理
 
-### ステートメント判定
+### 表示の最適化
 
-以下の正規表現パターンでPythonのステートメントタイプを検出：
-- コメントを除外した上で判定
-- クラス内の`def`は自動的に「メソッド」として認識
-
-### ビジュアル表現
-
-- インデント幅を2スペースに圧縮して表示（読みやすさ向上）
-- VS Codeのテーマカラーに適応
+- インデント幅を2スペースに圧縮（読みやすさ向上）
+- VS Codeのテーマに適応
 - セマンティックカラーでステートメントタイプを区別
 
-## ライセンス
+## 🐛 既知の制限
 
-[MIT](LICENSE)
+- Python 3.10以降の構文（match/case）に対応していますが、一部の高度な構文には未対応の場合があります
+- 非常に長いファイル（1000行以上）では表示に時間がかかることがあります
 
-## アイコン
+## 🤝 フィードバック・貢献
 
-アイコンはDALL-Eで作成しました。
+### バグ報告・機能要望
 
-## 対象ユーザー
+[GitHub Issues](https://github.com/osad-sakana/python-indent-visualizer/issues)でお知らせください。
 
-- Python初学者
-- ビジュアルプログラミング（Scratchなど）から移行する学習者
-- インデントベースの構文に不慣れな開発者
-- Pythonコードの構造を視覚的に把握したい方
+### 開発に参加
 
-## フィードバック
+プルリクエストを歓迎します！詳細は[CONTRIBUTING.md](https://github.com/osad-sakana/python-indent-visualizer/blob/main/CONTRIBUTING.md)をご覧ください。
 
-バグ報告や機能要望は、GitHubのIssuesでお願いします。
+## 📄 ライセンス
+
+MIT License - 詳細は[LICENSE](LICENSE)をご覧ください。
+
+## 🙏 謝辞
+
+- アイコンはDALL-Eで作成しました
+- Scratchの視覚的デザインにインスパイアされています
+
+## 🌟 評価・レビュー
+
+この拡張機能が役に立った場合は、[Marketplace](https://marketplace.visualstudio.com/items?itemName=osad-sakana.python-indent-visualizer)で⭐評価とレビューをお願いします！

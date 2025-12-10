@@ -17,6 +17,7 @@ export type StatementType =
   | 'match'
   | 'case'
   | 'assignment'
+  | 'import'
   | 'other';
 
 /**
@@ -40,6 +41,9 @@ function detectStatementType(line: string): StatementType {
   // Remove comments
   const codeOnly = line.split('#')[0].trim();
 
+  // Check for decorator
+  if (/^@/.test(codeOnly)) return 'other';
+
   // Check for statement types (in order of specificity)
   if (/^elif\s/.test(codeOnly)) return 'elif';
   if (/^else\s*:/.test(codeOnly)) return 'else';
@@ -62,7 +66,42 @@ function detectStatementType(line: string): StatementType {
  * Checks if a statement type is structural (creates a new block)
  */
 function isStructuralStatement(type: StatementType): boolean {
-  return type !== 'other' && type !== 'assignment';
+  return type !== 'other' && type !== 'assignment' && type !== 'import';
+}
+
+/**
+ * Detects if a line is an import statement and returns the imported module
+ * @param line - Trimmed line of Python code
+ * @returns Object with module name, or null if not an import
+ */
+function detectImport(line: string): { modules: string[] } | null {
+  // Match "import module" or "import module as alias"
+  const importPattern = /^import\s+(.+)$/;
+  const importMatch = line.match(importPattern);
+
+  if (importMatch) {
+    const imports = importMatch[1].split(',').map(imp => {
+      const parts = imp.trim().split(/\s+as\s+/);
+      // Return alias if exists, otherwise the module name
+      return parts.length > 1 ? parts[1].trim() : parts[0].trim();
+    });
+    return { modules: imports };
+  }
+
+  // Match "from module import ..."
+  const fromPattern = /^from\s+([a-zA-Z_][a-zA-Z0-9_.]*)\s+import\s+(.+)$/;
+  const fromMatch = line.match(fromPattern);
+
+  if (fromMatch) {
+    const items = fromMatch[2].split(',').map(item => {
+      const parts = item.trim().split(/\s+as\s+/);
+      // Return alias if exists, otherwise the item name
+      return parts.length > 1 ? parts[1].trim() : parts[0].trim();
+    });
+    return { modules: items };
+  }
+
+  return null;
 }
 
 /**
@@ -179,6 +218,9 @@ export function buildIndentTree(text: string): IndentNode[] {
   let inDocstring = false;
   let docstringDelimiter = '';
 
+  // Track decorators to attach them to the next function/class
+  let decoratorLines: Array<{text: string, indent: number, lineNum: number}> = [];
+
   const flushPendingStructural = () => {
     if (pendingStructuralNode) {
       // Combine all lines for the structural statement
@@ -231,9 +273,16 @@ export function buildIndentTree(text: string): IndentNode[] {
         const fullText = formattedLines.join('\n');
         const firstLine = formattedLines[0];
 
-        // Check if this is an assignment statement (both single and multi-line)
+        // Check statement type: import > assignment > other
+        const importInfo = detectImport(firstLine);
         const assignment = detectAssignment(firstLine);
-        const statementType: StatementType = assignment ? 'assignment' : 'other';
+
+        let statementType: StatementType = 'other';
+        if (importInfo) {
+          statementType = 'import';
+        } else if (assignment) {
+          statementType = 'assignment';
+        }
 
         const node: IndentNode = {
           label: fullText,
@@ -311,6 +360,13 @@ export function buildIndentTree(text: string): IndentNode[] {
     // Detect statement type
     let statementType = detectStatementType(trimmedLine);
 
+    // Handle decorators (@)
+    if (trimmedLine.startsWith('@')) {
+      // Store decorator line to attach to next def/class
+      decoratorLines.push({text: trimmedLine, indent: indent, lineNum: i});
+      continue;
+    }
+
     // Check if this is a method (def inside a class)
     if (statementType === 'def') {
       // Look for a class in the stack
@@ -341,10 +397,42 @@ export function buildIndentTree(text: string): IndentNode[] {
       // Flush any accumulated 'other' statements first
       flushOtherLines();
 
+      // Prepare label with decorators if this is def/class
+      let nodeLabel = trimmedLine;
+      let nodeLineNum = i;
+      let allLines: Array<{text: string, indent: number}> = [{text: trimmedLine, indent: indent}];
+
+      if ((statementType === 'def' || statementType === 'method' || statementType === 'class') && decoratorLines.length > 0) {
+        // Prepend decorators to the function/class
+        const baseIndent = decoratorLines[0].indent;
+        const decoratorTexts = decoratorLines.map(dec => {
+          const relativeIndent = Math.max(0, dec.indent - baseIndent);
+          const spaces = '  '.repeat(relativeIndent / 4);
+          return spaces + dec.text;
+        });
+
+        // Add the def/class line
+        const relativeIndent = Math.max(0, indent - baseIndent);
+        const spaces = '  '.repeat(relativeIndent / 4);
+        decoratorTexts.push(spaces + trimmedLine);
+
+        nodeLabel = decoratorTexts.join('\n');
+        nodeLineNum = decoratorLines[0].lineNum;
+
+        // Prepare allLines for potential multi-line statement
+        allLines = [
+          ...decoratorLines.map(dec => ({text: dec.text, indent: dec.indent})),
+          {text: trimmedLine, indent: indent}
+        ];
+
+        // Clear decorators
+        decoratorLines = [];
+      }
+
       // Create node for this structural statement
       const node: IndentNode = {
-        label: trimmedLine,
-        line: i,
+        label: nodeLabel,
+        line: nodeLineNum,
         indent: indent,
         children: [],
         statementType: statementType
@@ -354,7 +442,7 @@ export function buildIndentTree(text: string): IndentNode[] {
       if (bracketChange > 0) {
         // Start pending structural node
         pendingStructuralNode = node;
-        pendingStructuralLines = [{text: trimmedLine, indent: indent}];
+        pendingStructuralLines = allLines;
         pendingStructuralBrackets = bracketChange;
       } else {
         // Complete statement on single line
@@ -372,6 +460,9 @@ export function buildIndentTree(text: string): IndentNode[] {
         stack.push(node);
       }
     } else {
+      // Non-structural statement - clear any pending decorators
+      decoratorLines = [];
+
       // Non-structural statement - accumulate it
       if (otherLinesBuffer.length === 0) {
         // Start a new group

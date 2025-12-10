@@ -138,6 +138,23 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
       color: white;
     }
 
+    .statement-icon.import {
+      background-color: #59C059;
+      color: white;
+    }
+
+    /* Import badge styling */
+    .import-badge {
+      display: inline-block;
+      background-color: #59C059;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      font-weight: bold;
+      margin: 0 2px;
+    }
+
     /* Keyword highlighting */
     .keyword {
       font-weight: bold;
@@ -179,6 +196,10 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
     .keyword-match,
     .keyword-case {
       color: #D65CD6;
+    }
+
+    .keyword-other {
+      color: #9966FF;
     }
 
     /* Border colors for blocks by statement type */
@@ -231,6 +252,11 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
     .block[data-statement="assignment"] {
       border-color: #FF8C1A;
       background-color: rgba(255, 140, 26, 0.08);
+    }
+
+    .block[data-statement="import"] {
+      border-color: #59C059;
+      background-color: rgba(89, 192, 89, 0.08);
     }
 
     .block {
@@ -299,21 +325,22 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
        */
       function getStatementIcon(type) {
         const icons = {
-          'if': '🔀 条件',
-          'elif': '🔀 条件',
-          'else': '🔀 条件',
-          'for': '🔁 ループ',
-          'while': '🔄 ループ',
+          'if': '🔀 条件「もし」',
+          'elif': '🔀 条件「でなくてもし」',
+          'else': '🔀 条件「でなければ」',
+          'for': '🔁 forループ',
+          'while': '🔄 whileループ',
           'def': '📦 関数',
           'method': '⚙️ メソッド',
           'class': '🏗️ クラス',
-          'try': '🛡️ 例外',
-          'except': '⚠️ 例外',
-          'finally': '✅ 例外',
+          'try': '🛡️ 例外処理',
+          'except': '⚠️ 捕捉',
+          'finally': '✅ 最終処理',
           'with': '📋 with',
           'match': '🎯 マッチ',
           'case': '🎯 マッチ',
           'assignment': '📥 代入',
+          'import': '📦',
           'other': '📝'
         };
         return icons[type] || '📝';
@@ -358,6 +385,40 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
        * Highlights keywords in the code text based on statement type
        */
       function highlightKeyword(text, statementType) {
+        // Handle multi-line text with decorators
+        const lines = text.split('\\n');
+        const highlightedLines = [];
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+
+          // Check if this line is a decorator
+          if (line.trim().startsWith('@')) {
+            // Highlight decorator with function color
+            // Pattern: @decorator or @decorator(...) or @module.decorator(...)
+            const decoratorPattern = /^(\\s*)(@)(.*)$/;
+            const decoratorMatch = line.match(decoratorPattern);
+            if (decoratorMatch) {
+              const [, leadingSpace, atSymbol, rest] = decoratorMatch;
+              highlightedLines.push(
+                escapeHtml(leadingSpace) +
+                '<span class="keyword keyword-def">' + escapeHtml(atSymbol) + escapeHtml(rest) + '</span>'
+              );
+              continue;
+            }
+          }
+
+          // For non-decorator lines, apply normal keyword highlighting
+          highlightedLines.push(highlightSingleLine(line, statementType));
+        }
+
+        return highlightedLines.join('\\n');
+      }
+
+      /**
+       * Highlights keywords in a single line of code
+       */
+      function highlightSingleLine(text, statementType) {
         const keywordMap = {
           'if': 'if',
           'elif': 'elif',
@@ -412,6 +473,129 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
       }
 
       /**
+       * Highlights import statements with badges for imported modules
+       */
+      function highlightImport(text) {
+        // Pattern: "import module" or "import module as alias"
+        const importPattern = /^(\\s*)(import)\\s+(.+)$/;
+        const importMatch = text.match(importPattern);
+
+        if (importMatch) {
+          const [, leadingSpace, keyword, imports] = importMatch;
+          const importItems = imports.split(',').map(imp => {
+            const parts = imp.trim().split(/\\s+as\\s+/);
+            // Use alias if exists, otherwise module name
+            const name = parts.length > 1 ? parts[1].trim() : parts[0].trim();
+            return '<span class="import-badge">' + escapeHtml(name) + '</span>';
+          }).join(' ');
+
+          return escapeHtml(leadingSpace) +
+                 '<span class="keyword keyword-other">' + escapeHtml(keyword) + '</span> ' +
+                 importItems;
+        }
+
+        // Pattern: "from module import ..."
+        const fromPattern = /^(\\s*)(from)\\s+([a-zA-Z_][a-zA-Z0-9_.]*)\\s+(import)\\s+(.+)$/;
+        const fromMatch = text.match(fromPattern);
+
+        if (fromMatch) {
+          const [, leadingSpace, fromKeyword, moduleName, importKeyword, items] = fromMatch;
+          const importItems = items.split(',').map(item => {
+            const parts = item.trim().split(/\\s+as\\s+/);
+            // Use alias if exists, otherwise item name
+            const name = parts.length > 1 ? parts[1].trim() : parts[0].trim();
+            return '<span class="import-badge">' + escapeHtml(name) + '</span>';
+          }).join(' ');
+
+          return escapeHtml(leadingSpace) +
+                 '<span class="keyword keyword-other">' + escapeHtml(fromKeyword) + '</span> ' +
+                 escapeHtml(moduleName) + ' ' +
+                 '<span class="keyword keyword-other">' + escapeHtml(importKeyword) + '</span> ' +
+                 importItems;
+        }
+
+        return escapeHtml(text);
+      }
+
+      /**
+       * Highlights return, pass, break, continue, yield, raise, assert statements
+       */
+      function highlightOtherStatements(text) {
+        // Split by newlines to handle multi-line
+        const lines = text.split('\\n');
+        const highlightedLines = [];
+
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i];
+          let highlighted = false;
+
+          // Function-related keywords (use function color - blue)
+          const functionKeywords = ['return', 'yield'];
+          for (let j = 0; j < functionKeywords.length; j++) {
+            const keyword = functionKeywords[j];
+            const pattern = new RegExp('^(\\\\s*)(\\\\b' + keyword + '\\\\b)(.*)$');
+            const match = line.match(pattern);
+            if (match) {
+              const [, leadingSpace, keywordText, rest] = match;
+              highlightedLines.push(
+                escapeHtml(leadingSpace) +
+                '<span class="keyword keyword-def">' + escapeHtml(keywordText) + '</span>' +
+                escapeHtml(rest)
+              );
+              highlighted = true;
+              break;
+            }
+          }
+
+          if (highlighted) continue;
+
+          // Loop-related keywords (use loop color - orange)
+          const loopKeywords = ['break', 'continue'];
+          for (let j = 0; j < loopKeywords.length; j++) {
+            const keyword = loopKeywords[j];
+            const pattern = new RegExp('^(\\\\s*)(\\\\b' + keyword + '\\\\b)(.*)$');
+            const match = line.match(pattern);
+            if (match) {
+              const [, leadingSpace, keywordText, rest] = match;
+              highlightedLines.push(
+                escapeHtml(leadingSpace) +
+                '<span class="keyword keyword-for">' + escapeHtml(keywordText) + '</span>' +
+                escapeHtml(rest)
+              );
+              highlighted = true;
+              break;
+            }
+          }
+
+          if (highlighted) continue;
+
+          // Other keywords (pass, raise, assert)
+          const otherKeywords = ['pass', 'raise', 'assert'];
+          for (let j = 0; j < otherKeywords.length; j++) {
+            const keyword = otherKeywords[j];
+            const pattern = new RegExp('^(\\\\s*)(\\\\b' + keyword + '\\\\b)(.*)$');
+            const match = line.match(pattern);
+            if (match) {
+              const [, leadingSpace, keywordText, rest] = match;
+              highlightedLines.push(
+                escapeHtml(leadingSpace) +
+                '<span class="keyword keyword-other">' + escapeHtml(keywordText) + '</span>' +
+                escapeHtml(rest)
+              );
+              highlighted = true;
+              break;
+            }
+          }
+
+          if (!highlighted) {
+            highlightedLines.push(escapeHtml(line));
+          }
+        }
+
+        return highlightedLines.join('\\n');
+      }
+
+      /**
        * Recursively renders an IndentNode as HTML
        */
       function renderNode(node) {
@@ -424,6 +608,24 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
 
         // Check if the label has multiple lines
         const isMultiline = node.label.includes('\\n');
+
+        // For import nodes
+        if (node.statementType === 'import') {
+          const highlightedLabel = highlightImport(node.label);
+          const headerClass = isMultiline ? 'block-header multiline' : 'block-header';
+
+          return '<div class="block"' +
+                 ' data-line="' + node.line + '"' +
+                 ' data-indent="' + node.indent + '"' +
+                 ' data-statement="' + node.statementType + '"' +
+                 ' style="margin-left: ' + marginLeft + 'px;">' +
+                 '<div class="' + headerClass + '">' +
+                 '<span class="statement-icon ' + node.statementType + '">' + icon + '</span>' +
+                 '<div class="line-text">' + highlightedLabel + '</div>' +
+                 '</div>' +
+                 childrenHtml +
+                 '</div>';
+        }
 
         // For assignment nodes
         if (node.statementType === 'assignment') {
@@ -445,12 +647,14 @@ export function getWebviewContent(_webview: vscode.Webview, _extensionUri: vscod
 
         // For 'other' type nodes
         if (node.statementType === 'other') {
+          // Highlight return statements
+          const highlightedOther = highlightOtherStatements(node.label);
           return '<div class="block block-other"' +
                  ' data-line="' + node.line + '"' +
                  ' data-indent="' + node.indent + '"' +
                  ' data-statement="' + node.statementType + '"' +
                  ' style="margin-left: ' + marginLeft + 'px;">' +
-                 '<div class="line-text">' + escapeHtml(node.label) + '</div>' +
+                 '<div class="line-text">' + highlightedOther + '</div>' +
                  childrenHtml +
                  '</div>';
         }
